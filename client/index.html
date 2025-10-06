@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="WebXR Industrial Club - VR/AR Experience" />
+    <title>XR Industrial Club</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+      }
+
+      #app {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* Loading Splash */
+      #splash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s;
+      }
+
+      #splash.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #splash h1 {
+        font-size: 3em;
+        margin-bottom: 20px;
+        color: #00ff88;
+        text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+      }
+
+      #splash-progress {
+        width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 20px;
+      }
+
+      #splash-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff88, #00ccff);
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      #splash-status {
+        margin-top: 15px;
+        color: #aaa;
+        font-size: 0.9em;
+      }
+
+      /* HUD */
+      #hud {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        min-width: 300px;
+        z-index: 100;
+      }
+
+      #hud button {
+        background: #00ff88;
+        color: #000;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 5px;
+        transition: background 0.2s;
+      }
+
+      #hud button:hover {
+        background: #00cc66;
+      }
+
+      #hud button.secondary {
+        background: #444;
+        color: #fff;
+      }
+
+      #hud button.secondary:hover {
+        background: #666;
+      }
+
+      #cache-info {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.85em;
+        color: #aaa;
+      }
+
+      #cache-info div {
+        margin: 5px 0;
+      }
+
+      /* Progress Overlay */
+      #progress-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      #progress-overlay.active {
+        display: flex;
+      }
+
+      #progress-content {
+        background: rgba(0, 0, 0, 0.9);
+        padding: 40px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        max-width: 600px;
+        width: 90%;
+      }
+
+      #progress-content h2 {
+        color: #00ff88;
+        margin-bottom: 20px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 15px 0;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff88, #00ccff);
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      #file-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+
+      .file-item {
+        padding: 10px;
+        margin: 5px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .file-item.complete {
+        border-left: 3px solid #00ff88;
+      }
+
+      .file-item.failed {
+        border-left: 3px solid #ff4444;
+      }
+
+      .file-status {
+        font-size: 0.85em;
+        color: #aaa;
+      }
+
+      /* Controls Help */
+      #controls-help {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px 25px;
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+        display: none;
+      }
+
+      #controls-help.visible {
+        display: block;
+      }
+
+      #controls-help strong {
+        color: #00ff88;
+      }
+
+      /* VR Button (Three.js will inject this) */
+      #VRButton {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <!-- Splash Screen -->
+    <div id="splash">
+      <h1>XR INDUSTRIAL CLUB</h1>
+      <div id="splash-status">Initializing...</div>
+      <div id="splash-progress">
+        <div id="splash-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <h3 style="margin-bottom: 15px">Controls</h3>
+      <div>
+        <button id="btn-download">📥 Download Assets</button>
+        <button id="btn-clear-cache" class="secondary">🗑️ Clear Cache</button>
+      </div>
+      <div style="margin-top: 10px">
+        <button id="btn-toggle-controls" class="secondary">🎮 Controls: Desktop</button>
+        <button id="btn-quality" class="secondary">⚙️ Quality: Medium</button>
+      </div>
+      <div id="cache-info">
+        <div id="cache-version">Cache: <span>—</span></div>
+        <div id="cache-updated">Updated: <span>Never</span></div>
+        <div id="cache-size">Size: <span>0 files</span></div>
+      </div>
+    </div>
+
+    <!-- Progress Overlay -->
+    <div id="progress-overlay">
+      <div id="progress-content">
+        <h2>Downloading Assets</h2>
+        <div id="progress-text">Preparing...</div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" id="total-progress"></div>
+        </div>
+        <div id="file-list"></div>
+      </div>
+    </div>
+
+    <!-- Controls Help -->
+    <div id="controls-help">
+      <strong>Desktop:</strong> WASD - Move | Mouse - Look | Click - Lock Pointer | ESC - Exit<br />
+      <strong>VR:</strong> Thumbstick - Move | Trigger - Teleport
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "xr-industrial-club",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "WebXR industrial club with asset downloading and caching",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js",
+    "format": "prettier --write \"src/**/*.js\""
+  },
+  "dependencies": {
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.1"
+  },
+  "keywords": [
+    "webxr",
+    "threejs",
+    "vr",
+    "industrial",
+    "club",
+    "cache",
+    "pwa"
+  ],
+  "author": "",
+  "license": "MIT"
+}
