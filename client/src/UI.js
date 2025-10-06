@@ -9,9 +9,28 @@ import { prefetchAssets, clearAllCaches, getCacheInfo } from './Cache.js';
  */
 export class UIManager {
   constructor() {
+    console.log('UIManager constructor called');
+    console.log('Document ready state:', document.readyState);
+    
+    // Wait for DOM if not ready
+    if (document.readyState === 'loading') {
+      console.log('DOM not ready, waiting...');
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM ready, initializing UI...');
+        this.initialize();
+      });
+    } else {
+      console.log('DOM already ready, initializing immediately');
+      this.initialize();
+    }
+  }
+  
+  initialize() {
+    console.log('UIManager.initialize() called');
+    
     this.elements = {
       splash: document.getElementById('splash'),
-      splashProgress: document.getElementById('splash-progress'),
+      splashProgress: document.getElementById('splash-progress-bar'),
       splashStatus: document.getElementById('splash-status'),
       
       hud: document.getElementById('hud'),
@@ -34,44 +53,96 @@ export class UIManager {
     const missingElements = [];
     for (const [key, element] of Object.entries(this.elements)) {
       if (!element) {
+        console.log(`Missing element: ${key} (looking for #${this.getElementId(key)})`);
         missingElements.push(key);
+      } else {
+        console.log(`Found element: ${key}`);
       }
     }
     
     if (missingElements.length > 0) {
       console.error('Missing DOM elements:', missingElements);
+      console.log('Available elements in document:');
+      document.querySelectorAll('[id]').forEach(el => console.log(`  #${el.id}`));
       throw new Error(`Required DOM elements not found: ${missingElements.join(', ')}`);
     }
     
     this.qualityMode = 'high'; // 'high', 'medium', 'low'
     this.controlsVisible = false;
     
+    console.log('Initializing event listeners...');
     this.initEventListeners();
+    console.log('UIManager initialized successfully');
+  }
+  
+  getElementId(key) {
+    const mapping = {
+      splash: 'splash',
+      splashProgress: 'splash-progress-bar',
+      splashStatus: 'splash-status',
+      hud: 'hud',
+      downloadBtn: 'download-assets',
+      clearCacheBtn: 'clear-cache',
+      toggleControlsBtn: 'toggle-controls',
+      qualityBtn: 'quality-toggle',
+      enterVrBtn: 'enter-vr',
+      cacheInfo: 'cache-info',
+      progressOverlay: 'progress-overlay',
+      progressTotal: 'progress-total',
+      progressStatus: 'progress-status',
+      progressFiles: 'progress-files',
+      controlsHelp: 'controls-help'
+    };
+    return mapping[key] || key;
   }
   
   /**
    * Initialize event listeners
    */
   initEventListeners() {
+    console.log('Initializing event listeners...');
+    
     // Download assets button
-    this.elements.downloadBtn.addEventListener('click', () => {
-      this.onDownloadAssets();
-    });
+    if (this.elements.downloadBtn) {
+      this.elements.downloadBtn.addEventListener('click', () => {
+        this.onDownloadAssets();
+      });
+      console.log('Download button listener added');
+    } else {
+      console.warn('Download button not found');
+    }
     
     // Clear cache button
-    this.elements.clearCacheBtn.addEventListener('click', () => {
-      this.onClearCache();
-    });
+    if (this.elements.clearCacheBtn) {
+      this.elements.clearCacheBtn.addEventListener('click', () => {
+        this.onClearCache();
+      });
+      console.log('Clear cache button listener added');
+    } else {
+      console.warn('Clear cache button not found');
+    }
     
     // Toggle controls help
-    this.elements.toggleControlsBtn.addEventListener('click', () => {
-      this.toggleControls();
-    });
+    if (this.elements.toggleControlsBtn) {
+      this.elements.toggleControlsBtn.addEventListener('click', () => {
+        this.toggleControls();
+      });
+      console.log('Toggle controls button listener added');
+    } else {
+      console.warn('Toggle controls button not found');
+    }
     
     // Quality toggle
-    this.elements.qualityBtn.addEventListener('click', () => {
-      this.cycleQuality();
-    });
+    if (this.elements.qualityBtn) {
+      this.elements.qualityBtn.addEventListener('click', () => {
+        this.cycleQuality();
+      });
+      console.log('Quality button listener added');
+    } else {
+      console.warn('Quality button not found');
+    }
+    
+    console.log('Event listeners initialization complete');
   }
   
   /**
@@ -93,8 +164,10 @@ export class UIManager {
    * Update splash progress
    */
   updateSplashProgress(progress, status) {
-    this.elements.splashProgress.style.width = `${progress * 100}%`;
-    if (status) {
+    if (this.elements && this.elements.splashProgress) {
+      this.elements.splashProgress.style.width = `${progress * 100}%`;
+    }
+    if (status && this.elements && this.elements.splashStatus) {
       this.elements.splashStatus.textContent = status;
     }
   }
