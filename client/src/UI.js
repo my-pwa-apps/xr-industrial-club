@@ -30,6 +30,19 @@ export class UIManager {
       controlsHelp: document.getElementById('controls-help'),
     };
     
+    // Check if all required elements exist
+    const missingElements = [];
+    for (const [key, element] of Object.entries(this.elements)) {
+      if (!element) {
+        missingElements.push(key);
+      }
+    }
+    
+    if (missingElements.length > 0) {
+      console.error('Missing DOM elements:', missingElements);
+      throw new Error(`Required DOM elements not found: ${missingElements.join(', ')}`);
+    }
+    
     this.qualityMode = 'high'; // 'high', 'medium', 'low'
     this.controlsVisible = false;
     

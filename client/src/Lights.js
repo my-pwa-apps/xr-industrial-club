@@ -22,45 +22,58 @@ export class LightManager {
   async loadLightplan(url) {
     console.log('Starting lightplan load from:', url);
     
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Lightplan loading timeout')), 10000); // 10 second timeout
+    });
+    
+    const loadPromise = this.loadLightplanInternal(url);
+    
     try {
-      console.log('Fetching lightplan...');
-      const response = await fetch(url);
-      console.log('Response received:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load lightplan: ${response.statusText}`);
-      }
-      
-      console.log('Parsing JSON...');
-      const lightplan = await response.json();
-      console.log('Lightplan parsed successfully:', lightplan);
-      
-      // Set BPM if specified
-      if (lightplan.bpm) {
-        this.bpm = lightplan.bpm;
-        this.beatDuration = 60 / this.bpm;
-        console.log('BPM set to:', this.bpm);
-      }
-      
-      // Create fixtures
-      if (lightplan.fixtures) {
-        console.log('Creating fixtures...');
-        for (const fixtureData of lightplan.fixtures) {
-          console.log('Creating fixture:', fixtureData.type);
-          const fixture = this.createFixture(fixtureData);
-          if (fixture) {
-            this.fixtures.push(fixture);
-          }
-        }
-      }
-      
-      console.log(`Loaded ${this.fixtures.length} fixtures successfully`);
-      
+      await Promise.race([loadPromise, timeoutPromise]);
     } catch (error) {
       console.warn('Failed to load lightplan:', error);
       console.log('Using default lighting');
       this.createDefaultLighting();
     }
+  }
+  
+  /**
+   * Internal lightplan loading method
+   */
+  async loadLightplanInternal(url) {
+    console.log('Fetching lightplan...');
+    const response = await fetch(url);
+    console.log('Response received:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load lightplan: ${response.statusText}`);
+    }
+    
+    console.log('Parsing JSON...');
+    const lightplan = await response.json();
+    console.log('Lightplan parsed successfully:', lightplan);
+    
+    // Set BPM if specified
+    if (lightplan.bpm) {
+      this.bpm = lightplan.bpm;
+      this.beatDuration = 60 / this.bpm;
+      console.log('BPM set to:', this.bpm);
+    }
+    
+    // Create fixtures
+    if (lightplan.fixtures) {
+      console.log('Creating fixtures...');
+      for (const fixtureData of lightplan.fixtures) {
+        console.log('Creating fixture:', fixtureData.type);
+        const fixture = this.createFixture(fixtureData);
+        if (fixture) {
+          this.fixtures.push(fixture);
+        }
+      }
+    }
+    
+    console.log(`Loaded ${this.fixtures.length} fixtures successfully`);
   }
   
   /**

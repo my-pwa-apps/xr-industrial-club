@@ -33,13 +33,17 @@ async function boot() {
     
     // Load lightplan
     if (assetsConfig.lightplanUrl) {
+      console.log('About to load lightplan...');
       await app.loadLightplan(assetsConfig.lightplanUrl);
+      console.log('Lightplan loading completed in main.js');
     } else {
       console.warn('No lightplan URL in assets.json');
     }
     
     // Start app
+    console.log('About to start app...');
     app.start();
+    console.log('App.start() called');
     
     // Make app globally accessible for debugging
     window.app = app;

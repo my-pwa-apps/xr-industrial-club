@@ -119,12 +119,17 @@ export class App {
    * Load lightplan
    */
   async loadLightplan(url) {
+    console.log('App.loadLightplan called with URL:', url);
     this.ui.updateSplashProgress(0.6, 'Loading lights...');
     
     try {
+      console.log('Calling lightManager.loadLightplan...');
       await this.lightManager.loadLightplan(url);
+      console.log('Lightplan loading completed');
+      this.ui.updateSplashProgress(0.8, 'Lights loaded');
     } catch (error) {
       console.error('Failed to load lightplan:', error);
+      this.ui.updateSplashProgress(0.8, 'Light loading failed');
     }
   }
   
@@ -132,18 +137,23 @@ export class App {
    * Start the application
    */
   start() {
+    console.log('App.start() method called');
+    
     // Hide splash
+    console.log('Hiding splash...');
     this.ui.hideSplash();
     
     // Show HUD
+    console.log('Showing HUD...');
     this.ui.showHUD();
     
     // Start render loop
+    console.log('Starting render loop...');
     this.renderer.setAnimationLoop((time, frame) => {
       this.render(time, frame);
     });
     
-    console.log('App started');
+    console.log('App started successfully');
   }
   
   /**
