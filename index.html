@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="WebXR Industrial Club - VR/AR Experience" />
+    <meta name="description" content="WebXR Industrial Club - Immersive VR/AR Experience" />
+    <meta name="theme-color" content="#1a1a2e" />
     <title>XR Industrial Club</title>
-    <style>
+    <link rel="stylesheet" href="./style.css" />
+    <style display="none">
       * {
         margin: 0;
         padding: 0;
@@ -246,22 +248,23 @@
       </div>
     </div>
 
-    <!-- HUD -->
+    <!-- HUD (Heads-Up Display) -->
     <div id="hud">
-      <h3 style="margin-bottom: 15px">Controls</h3>
+      <h3>Controls</h3>
       <div>
         <button id="download-assets">📥 Download Assets</button>
         <button id="clear-cache" class="secondary">🗑️ Clear Cache</button>
       </div>
-      <div style="margin-top: 10px">
-        <button id="toggle-controls" class="secondary">🎮 Controls: Desktop</button>
-        <button id="quality-toggle" class="secondary">⚙️ Quality: Medium</button>
-        <button id="enter-vr" class="secondary">🎮 Enter VR</button>
+      <div class="button-group">
+        <button id="toggle-controls" class="secondary">ℹ️ Show Controls</button>
+        <button id="quality-toggle" class="secondary">⚙️ Quality: High</button>
+        <button id="enter-vr" class="secondary" style="display:none">🎮 Enter VR</button>
       </div>
       <div id="cache-info">
-        <div id="cache-version">Cache: <span>—</span></div>
-        <div id="cache-updated">Updated: <span>Never</span></div>
-        <div id="cache-size">Size: <span>0 files</span></div>
+        <div><strong>Cache</strong> <span id="cache-version-value">—</span></div>
+        <div><strong>Files</strong> <span id="cache-files-value">0</span></div>
+        <div><strong>Size</strong> <span id="cache-size-value">0 MB</span></div>
+        <div><strong>Updated</strong> <span id="cache-updated-value">Never</span></div>
       </div>
     </div>
 
@@ -279,8 +282,8 @@
 
     <!-- Controls Help -->
     <div id="controls-help">
-      <strong>Desktop:</strong> WASD - Move | Mouse - Look | Click - Lock Pointer | ESC - Exit<br />
-      <strong>VR:</strong> Thumbstick - Move | Trigger - Teleport
+      <div><strong>Desktop:</strong> WASD - Move | Mouse - Look | Click - Lock Pointer | ESC - Exit</div>
+      <div><strong>VR:</strong> Left Thumbstick - Move/Turn | Right Thumbstick - Strafe | A Button - Toggle Fly</div>
     </div>
 
     <script type="importmap">

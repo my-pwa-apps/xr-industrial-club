@@ -17,6 +17,7 @@ export class Controls {
     this.lastTurnTime = 0; // For snap turning
     this.lastFlyToggle = 0; // For fly mode toggle
     this.vrNotification = null; // For VR notifications
+    this.lastDebugLog = 0; // For debug logging
     this.orbitControls = null;
     this.pointerLocked = false;
     
@@ -341,10 +342,24 @@ export class Controls {
       }
     }
     
+    // Debug logging (log once per second)
+    if (!this.lastDebugLog || Date.now() - this.lastDebugLog > 1000) {
+      if (leftGamepad) {
+        console.log('Left controller axes:', Array.from(leftGamepad.axes));
+        console.log('Left controller buttons:', leftGamepad.buttons.map(b => b.pressed));
+      }
+      if (rightGamepad) {
+        console.log('Right controller axes:', Array.from(rightGamepad.axes));
+        console.log('Right controller buttons:', rightGamepad.buttons.map(b => b.pressed));
+      }
+      this.lastDebugLog = Date.now();
+    }
+    
     // LEFT CONTROLLER - Movement and turning
     if (leftGamepad && leftGamepad.axes.length >= 2) {
-      const leftX = leftGamepad.axes[0]; // left/right
-      const leftY = leftGamepad.axes[1]; // forward/back
+      // Try axes 2-3 first (common for thumbstick), fallback to 0-1
+      const leftX = leftGamepad.axes.length >= 4 ? leftGamepad.axes[2] : leftGamepad.axes[0];
+      const leftY = leftGamepad.axes.length >= 4 ? leftGamepad.axes[3] : leftGamepad.axes[1];
       
       // SNAP TURNING (more common in VR)
       if (Math.abs(leftX) > 0.7) {
@@ -383,8 +398,9 @@ export class Controls {
     
     // RIGHT CONTROLLER - Strafing and vertical movement
     if (rightGamepad && rightGamepad.axes.length >= 2) {
-      const rightX = rightGamepad.axes[0]; // strafe left/right
-      const rightY = rightGamepad.axes[1]; // fly up/down (fly mode only)
+      // Try axes 2-3 first (common for thumbstick), fallback to 0-1
+      const rightX = rightGamepad.axes.length >= 4 ? rightGamepad.axes[2] : rightGamepad.axes[0];
+      const rightY = rightGamepad.axes.length >= 4 ? rightGamepad.axes[3] : rightGamepad.axes[1];
       
       // STRAFING (left/right movement)
       if (Math.abs(rightX) > deadzone) {
