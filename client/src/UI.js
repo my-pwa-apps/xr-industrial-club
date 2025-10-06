@@ -10,24 +10,25 @@ import { prefetchAssets, clearAllCaches, getCacheInfo } from './Cache.js';
 export class UIManager {
   constructor() {
     console.log('UIManager constructor called');
-    console.log('Document ready state:', document.readyState);
     
-    // Wait for DOM if not ready
-    if (document.readyState === 'loading') {
-      console.log('DOM not ready, waiting...');
-      document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM ready, initializing UI...');
-        this.initialize();
-      });
+    // Initialize with empty elements first
+    this.elements = {};
+    this.qualityMode = 'medium';
+    this.controlsVisible = false;
+    
+    // Try to initialize DOM elements
+    this.initializeElements();
+    
+    // Only initialize event listeners if we have the required elements
+    if (this.hasRequiredElements()) {
+      this.initEventListeners();
     } else {
-      console.log('DOM already ready, initializing immediately');
-      this.initialize();
+      console.warn('Some UI elements missing, continuing with limited functionality');
     }
   }
   
-  initialize() {
-    console.log('UIManager.initialize() called');
-    
+  initializeElements() {
+    // Try to get each element, but don't fail if not found
     this.elements = {
       splash: document.getElementById('splash'),
       splashProgress: document.getElementById('splash-progress-bar'),
@@ -49,51 +50,19 @@ export class UIManager {
       controlsHelp: document.getElementById('controls-help'),
     };
     
-    // Check if all required elements exist
-    const missingElements = [];
+    // Log which elements were found
     for (const [key, element] of Object.entries(this.elements)) {
-      if (!element) {
-        console.log(`Missing element: ${key} (looking for #${this.getElementId(key)})`);
-        missingElements.push(key);
+      if (element) {
+        console.log(`✓ Found: ${key}`);
       } else {
-        console.log(`Found element: ${key}`);
+        console.log(`✗ Missing: ${key}`);
       }
     }
-    
-    if (missingElements.length > 0) {
-      console.error('Missing DOM elements:', missingElements);
-      console.log('Available elements in document:');
-      document.querySelectorAll('[id]').forEach(el => console.log(`  #${el.id}`));
-      throw new Error(`Required DOM elements not found: ${missingElements.join(', ')}`);
-    }
-    
-    this.qualityMode = 'high'; // 'high', 'medium', 'low'
-    this.controlsVisible = false;
-    
-    console.log('Initializing event listeners...');
-    this.initEventListeners();
-    console.log('UIManager initialized successfully');
   }
   
-  getElementId(key) {
-    const mapping = {
-      splash: 'splash',
-      splashProgress: 'splash-progress-bar',
-      splashStatus: 'splash-status',
-      hud: 'hud',
-      downloadBtn: 'download-assets',
-      clearCacheBtn: 'clear-cache',
-      toggleControlsBtn: 'toggle-controls',
-      qualityBtn: 'quality-toggle',
-      enterVrBtn: 'enter-vr',
-      cacheInfo: 'cache-info',
-      progressOverlay: 'progress-overlay',
-      progressTotal: 'progress-total',
-      progressStatus: 'progress-status',
-      progressFiles: 'progress-files',
-      controlsHelp: 'controls-help'
-    };
-    return mapping[key] || key;
+  hasRequiredElements() {
+    // Check if we have the basic elements needed for the app to function
+    return this.elements.splash && this.elements.splashStatus;
   }
   
   /**
@@ -157,7 +126,13 @@ export class UIManager {
    * Hide splash screen
    */
   hideSplash() {
-    this.elements.splash.classList.remove('active');
+    console.log('Hiding splash screen...');
+    if (this.elements.splash) {
+      this.elements.splash.classList.add('hidden');
+      console.log('Splash screen hidden');
+    } else {
+      console.warn('Splash element not found');
+    }
   }
   
   /**
@@ -176,8 +151,14 @@ export class UIManager {
    * Show HUD
    */
   showHUD() {
-    this.elements.hud.classList.add('active');
-    this.updateCacheInfo();
+    console.log('Showing HUD...');
+    if (this.elements.hud) {
+      this.elements.hud.style.display = 'block';
+      console.log('HUD shown');
+      this.updateCacheInfo();
+    } else {
+      console.warn('HUD element not found');
+    }
   }
   
   /**
