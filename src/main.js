@@ -22,7 +22,7 @@ async function boot() {
     
     // Load assets configuration
     console.log('Loading assets configuration...');
-    const assetsConfig = await readAssetsJson('/assets.json');
+    const assetsConfig = await readAssetsJson('./assets.json');
     
     // Load environment
     if (assetsConfig.environmentUrl) {
