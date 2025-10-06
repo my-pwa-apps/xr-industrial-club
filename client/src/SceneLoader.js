@@ -128,8 +128,9 @@ export function applyEnvironmentScale(root, targetSize = 20) {
   const maxDim = Math.max(size.x, size.y, size.z);
   
   // Scale to target size
+  let scale = 1;
   if (maxDim > 0) {
-    const scale = targetSize / maxDim;
+    scale = targetSize / maxDim;
     root.scale.setScalar(scale);
   }
   
