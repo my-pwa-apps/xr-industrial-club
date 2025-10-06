@@ -218,7 +218,7 @@
         display: none;
       }
 
-      #controls-help.visible {
+      #controls-help.active {
         display: block;
       }
 
@@ -250,12 +250,13 @@
     <div id="hud">
       <h3 style="margin-bottom: 15px">Controls</h3>
       <div>
-        <button id="btn-download">📥 Download Assets</button>
-        <button id="btn-clear-cache" class="secondary">🗑️ Clear Cache</button>
+        <button id="download-assets">📥 Download Assets</button>
+        <button id="clear-cache" class="secondary">🗑️ Clear Cache</button>
       </div>
       <div style="margin-top: 10px">
-        <button id="btn-toggle-controls" class="secondary">🎮 Controls: Desktop</button>
-        <button id="btn-quality" class="secondary">⚙️ Quality: Medium</button>
+        <button id="toggle-controls" class="secondary">🎮 Controls: Desktop</button>
+        <button id="quality-toggle" class="secondary">⚙️ Quality: Medium</button>
+        <button id="enter-vr" class="secondary">🎮 Enter VR</button>
       </div>
       <div id="cache-info">
         <div id="cache-version">Cache: <span>—</span></div>
@@ -268,11 +269,11 @@
     <div id="progress-overlay">
       <div id="progress-content">
         <h2>Downloading Assets</h2>
-        <div id="progress-text">Preparing...</div>
+        <div id="progress-status">Preparing...</div>
         <div class="progress-bar">
-          <div class="progress-bar-fill" id="total-progress"></div>
+          <div class="progress-bar-fill" id="progress-total"></div>
         </div>
-        <div id="file-list"></div>
+        <div id="progress-files"></div>
       </div>
     </div>
 
