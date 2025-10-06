@@ -6,10 +6,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export class Controls {
-  constructor(camera, renderer, scene) {
+  constructor(camera, renderer, scene, cameraRig = null) {
     this.camera = camera;
     this.renderer = renderer;
     this.scene = scene;
+    this.cameraRig = cameraRig || camera.parent; // Use provided rig or find parent
     
     this.mode = 'desktop'; // 'desktop' or 'vr'
     this.orbitControls = null;
@@ -310,9 +311,64 @@ export class Controls {
    * Update VR movement (thumbstick locomotion)
    */
   updateVRMovement(delta) {
-    // VR smooth locomotion would go here
-    // This requires reading gamepad axes from XR session
-    // Placeholder for now
+    // Get the XR session
+    const session = this.renderer.xr.getSession();
+    if (!session) return;
+    
+    // VR movement speed
+    const moveSpeed = 3.0;
+    
+    // Get controller input sources
+    const inputSources = session.inputSources;
+    
+    for (const inputSource of inputSources) {
+      if (inputSource.gamepad) {
+        const gamepad = inputSource.gamepad;
+        
+        // Use the primary controller (usually right hand) for movement
+        if (inputSource.handedness === 'right' && gamepad.axes.length >= 4) {
+          // Right thumbstick axes (typically axes 2 and 3)
+          const thumbstickX = gamepad.axes[2];
+          const thumbstickY = gamepad.axes[3];
+          
+          // Apply deadzone
+          const deadzone = 0.2;
+          if (Math.abs(thumbstickX) > deadzone || Math.abs(thumbstickY) > deadzone) {
+            // Get camera direction
+            const cameraDirection = new THREE.Vector3();
+            this.camera.getWorldDirection(cameraDirection);
+            
+            // Calculate movement direction relative to camera
+            const forward = new THREE.Vector3(cameraDirection.x, 0, cameraDirection.z).normalize();
+            const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
+            
+            // Calculate movement vector
+            const movement = new THREE.Vector3();
+            movement.addScaledVector(forward, -thumbstickY * moveSpeed * delta);
+            movement.addScaledVector(right, thumbstickX * moveSpeed * delta);
+            
+            // Apply movement to camera rig
+            if (this.cameraRig) {
+              this.cameraRig.position.add(movement);
+            }
+          }
+        }
+        
+        // Use left controller for turning (optional)
+        if (inputSource.handedness === 'left' && gamepad.axes.length >= 2) {
+          const turnThumbstickX = gamepad.axes[0];
+          const turnSpeed = 90; // degrees per second
+          const deadzone = 0.3;
+          
+          if (Math.abs(turnThumbstickX) > deadzone) {
+            if (this.cameraRig) {
+              const turnAngle = turnThumbstickX * turnSpeed * delta * (Math.PI / 180);
+              this.cameraRig.rotateY(-turnAngle);
+            }
+          }
+        }
+      }
+    }
   }
   
   /**

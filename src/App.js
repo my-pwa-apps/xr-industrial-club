@@ -111,6 +111,13 @@ export class App {
       0.1,
       100
     );
+    
+    // Create camera rig for VR movement
+    this.cameraRig = new THREE.Group();
+    this.cameraRig.add(this.camera);
+    this.scene.add(this.cameraRig);
+    
+    // Set initial camera position
     this.camera.position.set(0, 1.6, 5);
     
     // Create renderer
@@ -144,7 +151,7 @@ export class App {
     });
     
     // Create controls
-    this.controls = new Controls(this.camera, this.renderer, this.scene);
+    this.controls = new Controls(this.camera, this.renderer, this.scene, this.cameraRig);
     
     // Create light manager
     this.lightManager = new LightManager(this.scene);
