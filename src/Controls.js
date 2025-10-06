@@ -13,6 +13,10 @@ export class Controls {
     this.cameraRig = cameraRig || camera.parent; // Use provided rig or find parent
     
     this.mode = 'desktop'; // 'desktop' or 'vr'
+    this.vrFlyMode = false; // Toggle for VR fly mode
+    this.lastTurnTime = 0; // For snap turning
+    this.lastFlyToggle = 0; // For fly mode toggle
+    this.vrNotification = null; // For VR notifications
     this.orbitControls = null;
     this.pointerLocked = false;
     
@@ -308,67 +312,162 @@ export class Controls {
   }
   
   /**
-   * Update VR movement (thumbstick locomotion)
+   * Update VR movement (improved intuitive controls)
    */
   updateVRMovement(delta) {
     // Get the XR session
     const session = this.renderer.xr.getSession();
     if (!session) return;
     
-    // VR movement speed
-    const moveSpeed = 3.0;
+    // VR movement speeds
+    const moveSpeed = this.vrFlyMode ? 5.0 : 3.0;
+    const turnSpeed = 60; // degrees per second
+    const deadzone = 0.15;
     
     // Get controller input sources
     const inputSources = session.inputSources;
     
+    let leftGamepad = null;
+    let rightGamepad = null;
+    
+    // Find left and right controllers
     for (const inputSource of inputSources) {
       if (inputSource.gamepad) {
-        const gamepad = inputSource.gamepad;
-        
-        // Use the primary controller (usually right hand) for movement
-        if (inputSource.handedness === 'right' && gamepad.axes.length >= 4) {
-          // Right thumbstick axes (typically axes 2 and 3)
-          const thumbstickX = gamepad.axes[2];
-          const thumbstickY = gamepad.axes[3];
-          
-          // Apply deadzone
-          const deadzone = 0.2;
-          if (Math.abs(thumbstickX) > deadzone || Math.abs(thumbstickY) > deadzone) {
-            // Get camera direction
-            const cameraDirection = new THREE.Vector3();
-            this.camera.getWorldDirection(cameraDirection);
-            
-            // Calculate movement direction relative to camera
-            const forward = new THREE.Vector3(cameraDirection.x, 0, cameraDirection.z).normalize();
-            const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
-            
-            // Calculate movement vector
-            const movement = new THREE.Vector3();
-            movement.addScaledVector(forward, -thumbstickY * moveSpeed * delta);
-            movement.addScaledVector(right, thumbstickX * moveSpeed * delta);
-            
-            // Apply movement to camera rig
-            if (this.cameraRig) {
-              this.cameraRig.position.add(movement);
-            }
-          }
-        }
-        
-        // Use left controller for turning (optional)
-        if (inputSource.handedness === 'left' && gamepad.axes.length >= 2) {
-          const turnThumbstickX = gamepad.axes[0];
-          const turnSpeed = 90; // degrees per second
-          const deadzone = 0.3;
-          
-          if (Math.abs(turnThumbstickX) > deadzone) {
-            if (this.cameraRig) {
-              const turnAngle = turnThumbstickX * turnSpeed * delta * (Math.PI / 180);
-              this.cameraRig.rotateY(-turnAngle);
-            }
-          }
+        if (inputSource.handedness === 'left') {
+          leftGamepad = inputSource.gamepad;
+        } else if (inputSource.handedness === 'right') {
+          rightGamepad = inputSource.gamepad;
         }
       }
     }
+    
+    // LEFT CONTROLLER - Movement and turning
+    if (leftGamepad && leftGamepad.axes.length >= 2) {
+      const leftX = leftGamepad.axes[0]; // left/right
+      const leftY = leftGamepad.axes[1]; // forward/back
+      
+      // SNAP TURNING (more common in VR)
+      if (Math.abs(leftX) > 0.7) {
+        // Only turn if we haven't turned recently (prevent continuous turning)
+        if (!this.lastTurnTime || Date.now() - this.lastTurnTime > 300) {
+          const turnAngle = leftX > 0 ? -30 : 30; // 30 degree snaps
+          if (this.cameraRig) {
+            this.cameraRig.rotateY(turnAngle * Math.PI / 180);
+            this.lastTurnTime = Date.now();
+            console.log('VR snap turn:', turnAngle, 'degrees');
+          }
+        }
+      }
+      
+      // FORWARD/BACKWARD MOVEMENT
+      if (Math.abs(leftY) > deadzone) {
+        // Get camera direction (where user is looking)
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        
+        let movement;
+        if (this.vrFlyMode) {
+          // Fly mode: move in the direction you're looking (including up/down)
+          movement = cameraDirection.clone().multiplyScalar(-leftY * moveSpeed * delta);
+        } else {
+          // Ground mode: only move on horizontal plane
+          const forward = new THREE.Vector3(cameraDirection.x, 0, cameraDirection.z).normalize();
+          movement = forward.multiplyScalar(-leftY * moveSpeed * delta);
+        }
+        
+        if (this.cameraRig) {
+          this.cameraRig.position.add(movement);
+        }
+      }
+    }
+    
+    // RIGHT CONTROLLER - Strafing and vertical movement
+    if (rightGamepad && rightGamepad.axes.length >= 2) {
+      const rightX = rightGamepad.axes[0]; // strafe left/right
+      const rightY = rightGamepad.axes[1]; // fly up/down (fly mode only)
+      
+      // STRAFING (left/right movement)
+      if (Math.abs(rightX) > deadzone) {
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        const right = new THREE.Vector3().crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0)).normalize();
+        const movement = right.multiplyScalar(rightX * moveSpeed * delta);
+        
+        if (this.cameraRig) {
+          this.cameraRig.position.add(movement);
+        }
+      }
+      
+      // VERTICAL MOVEMENT (fly mode only)
+      if (this.vrFlyMode && Math.abs(rightY) > deadzone) {
+        const movement = new THREE.Vector3(0, -rightY * moveSpeed * delta, 0);
+        if (this.cameraRig) {
+          this.cameraRig.position.add(movement);
+        }
+      }
+    }
+    
+    // BUTTON CONTROLS - Check for button presses
+    if (rightGamepad && rightGamepad.buttons.length > 0) {
+      // A button (or primary button) - toggle fly mode
+      if (rightGamepad.buttons[0] && rightGamepad.buttons[0].pressed) {
+        if (!this.lastFlyToggle || Date.now() - this.lastFlyToggle > 500) {
+          this.vrFlyMode = !this.vrFlyMode;
+          this.lastFlyToggle = Date.now();
+          console.log('VR fly mode:', this.vrFlyMode ? 'ON' : 'OFF');
+          
+          // Show notification to user
+          this.showVRNotification(`Fly Mode: ${this.vrFlyMode ? 'ON' : 'OFF'}`);
+        }
+      }
+    }
+  }
+  
+  /**
+   * Show notification in VR (temporary text display)
+   */
+  showVRNotification(text) {
+    // Create temporary text notification
+    if (this.vrNotification) {
+      this.scene.remove(this.vrNotification);
+    }
+    
+    // Create a simple text sprite for notification
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 512;
+    canvas.height = 128;
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    context.fillRect(0, 0, 512, 128);
+    
+    context.fillStyle = '#00ff88';
+    context.font = '48px Arial';
+    context.textAlign = 'center';
+    context.fillText(text, 256, 80);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture });
+    this.vrNotification = new THREE.Sprite(material);
+    
+    // Position in front of camera
+    const cameraDirection = new THREE.Vector3();
+    this.camera.getWorldDirection(cameraDirection);
+    const notificationPos = this.camera.getWorldPosition(new THREE.Vector3());
+    notificationPos.add(cameraDirection.multiplyScalar(2));
+    notificationPos.y += 0.5;
+    
+    this.vrNotification.position.copy(notificationPos);
+    this.vrNotification.scale.set(2, 0.5, 1);
+    this.scene.add(this.vrNotification);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+      if (this.vrNotification) {
+        this.scene.remove(this.vrNotification);
+        this.vrNotification = null;
+      }
+    }, 2000);
   }
   
   /**
