@@ -1,0 +1,29 @@
+{
+  "bpm": 128,
+  "fixtures": [
+    {
+      "type": "movingHead",
+      "position": [-3, 4, -5],
+      "color": "#ff0088",
+      "intensity": 2.0
+    },
+    {
+      "type": "movingHead",
+      "position": [3, 4, -5],
+      "color": "#00ff88",
+      "intensity": 2.0
+    },
+    {
+      "type": "strobe",
+      "position": [0, 5, -8],
+      "color": "#ffffff",
+      "intensity": 3.0
+    },
+    {
+      "type": "laser",
+      "position": [0, 4.5, -3],
+      "color": "#00ccff",
+      "intensity": 1.5
+    }
+  ]
+}
