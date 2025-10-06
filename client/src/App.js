@@ -25,6 +25,73 @@ export class App {
   }
   
   /**
+   * Add immediate visible content to the scene
+   */
+  addImmediateContent() {
+    console.log('Adding immediate visible content...');
+    
+    // Add basic lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+    this.scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(10, 10, 5);
+    directionalLight.castShadow = true;
+    this.scene.add(directionalLight);
+    
+    // Change scene background to see if rendering is working
+    this.scene.background = new THREE.Color(0x111122);
+    
+    // Add a simple floor
+    const floorGeometry = new THREE.PlaneGeometry(20, 20);
+    const floorMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x666666,
+      side: THREE.DoubleSide 
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
+    floor.receiveShadow = true;
+    this.scene.add(floor);
+    
+    // Add some larger, brighter colored cubes to see something
+    const cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+    
+    // Red cube
+    const redMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+    const redCube = new THREE.Mesh(cubeGeometry, redMaterial);
+    redCube.position.set(-4, 1, 0);
+    redCube.castShadow = true;
+    this.scene.add(redCube);
+    
+    // Green cube
+    const greenMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+    const greenCube = new THREE.Mesh(cubeGeometry, greenMaterial);
+    greenCube.position.set(0, 1, 0);
+    greenCube.castShadow = true;
+    this.scene.add(greenCube);
+    
+    // Blue cube
+    const blueMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+    const blueCube = new THREE.Mesh(cubeGeometry, blueMaterial);
+    blueCube.position.set(4, 1, 0);
+    blueCube.castShadow = true;
+    this.scene.add(blueCube);
+    
+    // Add a tall white cube so we definitely see something
+    const tallCube = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 6, 1), 
+      new THREE.MeshLambertMaterial({ color: 0xffffff })
+    );
+    tallCube.position.set(0, 3, -3);
+    this.scene.add(tallCube);
+    
+    console.log('Scene object count:', this.scene.children.length);
+    console.log('Camera position:', this.camera.position);
+    console.log('Immediate content added - should see floor and colored cubes');
+  }
+  
+  /**
    * Initialize the application
    */
   async init() {
@@ -53,7 +120,16 @@ export class App {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.xr.enabled = true;
-    document.body.appendChild(this.renderer.domElement);
+    
+    // Add to app div instead of body
+    const appDiv = document.getElementById('app');
+    if (appDiv) {
+      appDiv.appendChild(this.renderer.domElement);
+      console.log('Renderer canvas added to #app div');
+    } else {
+      document.body.appendChild(this.renderer.domElement);
+      console.log('Renderer canvas added to body (fallback)');
+    }
     
     // Add VR button
     const vrButton = VRButton.createButton(this.renderer);
@@ -72,6 +148,9 @@ export class App {
     
     // Create light manager
     this.lightManager = new LightManager(this.scene);
+    
+    // Add some immediate visible content
+    this.addImmediateContent();
     
     // Handle window resize
     window.addEventListener('resize', () => this.onResize());
