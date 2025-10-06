@@ -20,25 +20,33 @@ export class LightManager {
    * Load lightplan from JSON
    */
   async loadLightplan(url) {
+    console.log('Starting lightplan load from:', url);
+    
     try {
+      console.log('Fetching lightplan...');
       const response = await fetch(url);
+      console.log('Response received:', response.status, response.statusText);
+      
       if (!response.ok) {
         throw new Error(`Failed to load lightplan: ${response.statusText}`);
       }
       
+      console.log('Parsing JSON...');
       const lightplan = await response.json();
-      
-      console.log('Loading lightplan:', lightplan);
+      console.log('Lightplan parsed successfully:', lightplan);
       
       // Set BPM if specified
       if (lightplan.bpm) {
         this.bpm = lightplan.bpm;
         this.beatDuration = 60 / this.bpm;
+        console.log('BPM set to:', this.bpm);
       }
       
       // Create fixtures
       if (lightplan.fixtures) {
+        console.log('Creating fixtures...');
         for (const fixtureData of lightplan.fixtures) {
+          console.log('Creating fixture:', fixtureData.type);
           const fixture = this.createFixture(fixtureData);
           if (fixture) {
             this.fixtures.push(fixture);
@@ -46,7 +54,7 @@ export class LightManager {
         }
       }
       
-      console.log(`Loaded ${this.fixtures.length} fixtures`);
+      console.log(`Loaded ${this.fixtures.length} fixtures successfully`);
       
     } catch (error) {
       console.warn('Failed to load lightplan:', error);
